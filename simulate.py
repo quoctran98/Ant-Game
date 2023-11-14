@@ -21,7 +21,7 @@ BASIC_ANT_STATS = {
     "health": 100,
     "speed": 1,
     "damage": 50,
-    "range": 10,
+    "attack_range": 10,
     "sense_range": 50
 }
 

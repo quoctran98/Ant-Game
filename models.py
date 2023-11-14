@@ -19,32 +19,32 @@ class Battle():
 
         # Messages to be added to the list of messages at the end of the tick
         self.message_queue = []
-        self.messages = [] # List of (ant, message, game_tick)
+        self.messages = [] # List of (x, y, team, message, game_tick)
 
     def new_message(self, ant, message):
         """Add a message to the message queue."""
         self.message_queue.append((ant, message, self.game_tick))
 
-    def attack(self, attacker, damage, range):
+    def attack(self, attacker, damage, attack_range):
         """Add an attack to the attack queue to be resolved at the end of the tick."""
-        self.attack_queue.append((attacker, damage, range))
+        self.attack_queue.append((attacker, damage, attack_range))
         return(True)
     
-    def block(self, blocker, damage, range):
+    def block(self, blocker, damage):
         """Add a block to the block queue to be resolved at the end of the tick."""
-        self.block_queue.append((blocker, damage, range))
+        self.block_queue.append((blocker, damage))
         return(True)
     
     def resolve_attacks(self):
         # Resolve the attacks after all ants have executed their antgorithms
         while len(self.attack_queue) > 0:
-            attacker, damage, range = self.attack_queue.pop(0)
+            attacker, damage, attack_range = self.attack_queue.pop(0)
             for ant in self.ants:
                 if ant == attacker: # Make sure the ant isn't the attacker...
                     continue
-                if (ant.x - attacker.x)**2 + (ant.y - attacker.y)**2 < range**2:
+                if (ant.x - attacker.x)**2 + (ant.y - attacker.y)**2 < attack_range**2:
                     # Check if this ant is in the block_queue
-                    for blocker, block_damage, block_range in self.block_queue:
+                    for blocker, block_damage in self.block_queue:
                         if blocker == ant:
                             # If the ant is blocking, the damage is reduced
                             damage -= block_damage
@@ -71,7 +71,7 @@ class Ant():
         self.alive = True
 
         # Combat and movement stats
-        required_stats = ["health", "speed", "damage", "range", "sense_range"]
+        required_stats = ["health", "speed", "damage", "attack_range", "sense_range"]
         for s in required_stats:
             if s not in stats_dict:
                 raise ValueError("Ant stats must include " + s)
@@ -104,10 +104,17 @@ class Ant():
         """Broadcast a message to all nearby ants."""
         self.battle.new_message(ant=self, message=message)
 
-    def walk(self):
+    def walk(self, distance=None):
         """Move the ant forward in the direction it is facing."""
-        new_x = self.x + self.speed * math.cos(self.rotation)
-        new_y = self.y + self.speed * math.sin(self.rotation)
+        # Default to moving the full speed
+        if distance is None:
+            distance = self.speed
+        if distance > self.speed:
+            distance = self.speed
+        
+        # Calculate the ant's new x and y positions
+        new_x = self.x + distance * math.cos(self.rotation)
+        new_y = self.y + distance * math.sin(self.rotation)
 
         # Make sure the ant doesn't walk off the screen
         if (new_x < 0) or (new_y < 0):
@@ -125,15 +132,23 @@ class Ant():
         self.rotation %= 2 * math.pi
         return(True)
     
-    def strafe(self, rel_angle):
+    def strafe(self, rel_angle, distance=None):
         """Strafe the ant toward the given relative angle in radians (at half speed)."""
-        self.x += self.speed * math.cos(self.rotation + rel_angle) / 2
-        self.y += self.speed * math.sin(self.rotation + rel_angle) / 2
+
+        # Default to moving the half speed (can't strafe at full speed)
+        if distance is None:
+            distance = self.speed/2
+        if distance > self.speed/2:
+            distance = self.speed/2
+
+        # Calculate the ant's new x and y positions
+        self.x += distance * math.cos(self.rotation + rel_angle) / 2
+        self.y += distance * math.sin(self.rotation + rel_angle) / 2
         return(True)
     
     def bite(self):
         """Bite any ants in front of the ant."""
-        self.battle.attack(self, self.damage, self.range)
+        self.battle.attack(self, self.damage, self.attack_range)
         return(True)    
     
     def suffer(self, damage, attacker_x, attacker_y):
