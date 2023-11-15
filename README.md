@@ -68,9 +68,9 @@ Each game tick, the following steps are performed:
 
 ### Sensing and Messaging
 
-*Ants can't see very well! Their primary method of sensing is by feeling ants next to them. They can also communicate with nearby ants by secreting pheromones that other ants can sense, but this message can be dectected by enemy ants as well!*
+*Ants can't see very well! They can sense nearby ants, but their main method of communication is secreting pheromones that other ants can sense.*
 
-*These are the ants' only methods of communication, but they can be called upon as many times as needed during the ant's turn.*
+*These are the ants' only methods of communication that your antgorithm can employ, but they can be called upon as many times as needed during the ant's turn.*
 
 `attackable(bool: include_teammates=False, include_enemies=True)` *(list of (float: x, float: y, str: team))*: returns a list of all ants within the ant's `bite_range` and `bite_angle` that are alive. Each tuple in the list contains the x and y coordinates of the ant, as well as the team that the ant is on.
 
