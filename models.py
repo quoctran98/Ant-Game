@@ -6,6 +6,7 @@ import pygame # For drawing the ants
 import math
 import random
 import uuid
+from copy import copy, deepcopy
 
 class Battle():
     def __init__(self):
@@ -142,6 +143,10 @@ class Ant(pygame.sprite.Sprite):
             return(None)
         else:
             return(this_ant[0])
+        
+    def copy(self):
+        """Return a copy of the ant."""
+        return(copy(self))
 
     def attackable(self, include_teammates=False, include_enemies=True, return_objects=False):
         """Return a list of all ants that can be attacked (within bite_range and bite_angle)."""

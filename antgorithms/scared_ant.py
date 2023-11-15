@@ -5,7 +5,13 @@ def antgorithm(self):
 
     # Determine if this ant will be a blocking ant or a running ant
     if (self.battle.game_tick == 0):
+        self.memory["last_scared"] = 0
+        self.memory["attacking_ant"] = False
         self.memory["blocking_ant"] = random.random() < 0.5
+
+    # It the ant hasn't been scared in a while, it'll be an attacking ant
+    if (self.battle.game_tick - self.memory["last_scared"] > 1000):
+        self.memory["attacking_ant"] = True
     
     # Detect nearby ants
     enemies_nearby = self.sense(include_teammates=False)
@@ -21,9 +27,25 @@ def antgorithm(self):
             return("walk", {})
 
     if len(enemies_nearby) > 0:
+        self.memory["last_scared"] = self.battle.game_tick
+        nearest_enemy = self.nearest(enemies_nearby)
+
+        # If it's an attacking ant, chase and attack
+        if self.memory["attacking_ant"]:
+            # Bite if an enemy ant is in attackble range
+            attackable_ants = self.attackable(include_teammates=False)
+            if len(attackable_ants) > 0:
+                return("bite", {})
+            
+            # Walk towards the nearest ant, if the angle is close enough
+            angle_to_nearest_ant = self.angle_toward(self.nearest(enemies_nearby))
+            if abs(angle_to_nearest_ant - self.rotation) < math.pi/2:
+                return("walk", {})
+            
+            # Turn towards the nearest ant
+            return("turn", {"rel_angle": angle_to_nearest_ant - self.rotation})
 
         # If it's a blocking ant, block (if they got too close)
-        nearest_enemy = self.nearest(enemies_nearby)
         if self.memory["blocking_ant"] and self.distance_to(nearest_enemy) < self.bite_range:
             return("block", {})
 
