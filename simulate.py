@@ -46,48 +46,52 @@ BASIC_ANT_STATS = {
 N_ANTS = 100
 
 red_center = (400, 50)
-red_antgorithm = squadron_ant.antgorithm
+red_ants = pygame.sprite.Group()
 for _ in range(N_ANTS):
     x = red_center[0] + random.randint(-50, 50)
     y = red_center[1] + random.randint(-50, 50)
     rot = random.random() * 2 * math.pi
-    red_ant = Ant(battle, "red",
+    ant = Ant(battle, "red",
                   stats_dict=BASIC_ANT_STATS,
                   init_position=(x,y,rot),
                   antgorithm=squadron_ant.antgorithm)
+    red_ants.add(ant)
     
 blue_center = (400, 750)
-blue_antgorithm = attacking_ant.antgorithm
+blue_ants = pygame.sprite.Group()
 for _ in range(N_ANTS):
     x = blue_center[0] + random.randint(-50, 50)
     y = blue_center[1] + random.randint(-50, 50)
-    rot = 3/2 * math.pi
-    blue_ant = Ant(battle, "blue", 
+    rot = random.random() * 2 * math.pi
+    ant = Ant(battle, "blue", 
                    stats_dict=BASIC_ANT_STATS,
                    init_position=(x,y,rot), 
                    antgorithm=attacking_ant.antgorithm)
+    blue_ants.add(ant)
 
 green_center = (50, 400)
-green_antgorithm = marching_ant.antgorithm
+green_ants = pygame.sprite.Group()
 for _ in range(N_ANTS):
     x = green_center[0] + random.randint(-50, 50)
     y = green_center[1] + random.randint(-50, 50)
-    rot = random.random() * 2 * math.pi
-    green_ant = Ant(battle, "green", 
+    rot = 0
+    ant = Ant(battle, "green", 
                     stats_dict=BASIC_ANT_STATS,
                     init_position=(x,y,rot), 
                     antgorithm=marching_ant.antgorithm)
+    green_ants.add(ant)
     
 black_center = (750, 400)
-black_antgorithm = scared_ant.antgorithm
+black_ants = pygame.sprite.Group()
 for _ in range(N_ANTS):
     x = black_center[0] + random.randint(-50, 50)
     y = black_center[1] + random.randint(-50, 50)
     rot = random.random() * 2 * math.pi
-    yellow_ant = Ant(battle, "black", 
+    ant = Ant(battle, "black", 
                      stats_dict=BASIC_ANT_STATS,
                      init_position=(x,y,rot), 
                      antgorithm=scared_ant.antgorithm)
+    black_ants.add(ant)
 
 
 # Draw the ants
@@ -106,20 +110,19 @@ def draw_ants(screen, battle):
             rotated_ant.set_colorkey((255, 255, 255))
             # Draw the ant's surface (centered at the ant's position)
             screen.blit(rotated_ant, (ant.x - rotated_ant.get_width()/2, ant.y - rotated_ant.get_height()/2))
-            
-            # Draw the ant's hitbox
-            # pygame.draw.circle(screen, (255, 0, 0), (int(ant.x), int(ant.y)), ant.size, 1)
 
     # List the population counts
     red_count = len([ant for ant in battle.ants if ant.alive and ant.team == "red"])
     blue_count = len([ant for ant in battle.ants if ant.alive and ant.team == "blue"])
+    green_count = len([ant for ant in battle.ants if ant.alive and ant.team == "green"])
+    black_count = len([ant for ant in battle.ants if ant.alive and ant.team == "black"])
 
     # Draw the population counts
     font = pygame.font.SysFont("Comic Sans", 24)
     red_count_surf = font.render(f"Red: {red_count}", True, (255, 0, 0))
     blue_count_surf = font.render(f"Blue: {blue_count}", True, (0, 0, 255))
-    green_count_surf = font.render(f"Green: {blue_count}", True, (0, 255, 0))
-    black_count_surf = font.render(f"Black: {blue_count}", True, (0, 0, 0))
+    green_count_surf = font.render(f"Green: {green_count}", True, (0, 255, 0))
+    black_count_surf = font.render(f"Black: {black_count}", True, (0, 0, 0))
     screen.blit(red_count_surf, (battle.bounds[0] + 10, 10))
     screen.blit(blue_count_surf, (battle.bounds[0] + 10, 40))
     screen.blit(green_count_surf, (battle.bounds[0] + 10, 70))
@@ -127,17 +130,7 @@ def draw_ants(screen, battle):
 
 def execute_antgorithm(ant):
     """Wrapper to execute the ant's antgorithm."""
-    # ant_copy = ant.copy() # Ant is not allowed to be modified :)
-    # new_memory = ant_copy.memory.copy() # Memory is allowed to be modified :)
-    if (ant.team == "blue"):
-        method_name, kwargs_dict = blue_antgorithm(ant)
-    elif (ant.team == "red"):
-        method_name, kwargs_dict = red_antgorithm(ant)
-    elif (ant.team == "green"):
-        method_name, kwargs_dict = green_antgorithm(ant)
-    elif (ant.team == "black"):
-        method_name, kwargs_dict = black_antgorithm(ant)
-    return(method_name, kwargs_dict)
+    return(ant.update(ant))
 
 # Main loop
 while running:
@@ -150,7 +143,7 @@ while running:
     # Fill the background with white
     screen.fill((255, 255, 255))
 
-    # Draw the ants
+    # Draw the ants every 10 ticks
     draw_ants(screen, battle)
 
     # Flip the display

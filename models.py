@@ -118,7 +118,7 @@ class Ant(pygame.sprite.Sprite):
         self.memory = {}
 
         # Attach the antgorithm
-        self.antgorithm = antgorithm
+        self.update = antgorithm
 
         # Add the ant to the battle
         self.battle = battle
@@ -302,7 +302,7 @@ class Ant(pygame.sprite.Sprite):
         self.battle.ants.remove(self)
         return(True)
     
-    def antgorithm(self):
+    def update(self):
         """The ant's antgorithm to be attached to the ant and run every tick."""
         return()
                 

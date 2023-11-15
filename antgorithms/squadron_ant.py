@@ -5,7 +5,7 @@ def antgorithm(self):
 
     # Have a few ants declare themselves as squad leaders
     if (self.battle.game_tick == 0):
-        if (random.random() < 0.1):
+        if (random.random() < 0.05):
             self.memory["squad_leader"] = True
             self.memory["squadron"] = random.randint(100, 999)
         else:

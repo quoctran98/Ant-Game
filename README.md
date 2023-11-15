@@ -1,12 +1,16 @@
-# Ant-Game
+# Ant Game
+
+Ant Game is a game loosely inspired by the ant-based combat in Adrian Tchaikovsky's *Children of Time*, where ant armies are programmed to fight other ants. In this game, players program their ant army to fight other ant armies!
+
+The game is "played" by writing an *antgorithm*, a singular function to be run by every ant and provide instructions for that ant. The game engine then simulates the battle between ant armies, and the winner is the army with the last ant standing.
 
 # Antgorithm API (Ant Programming Interface) Guide
 
 ## Introduction
 
-To play each player will write an antgorithm to be implemented by each ant in their army. Each antgorithm is, at its core, just a function run every game tick that returns an instruction for that ant. 
+To play each player will write an antgorithm to be implemented by each ant in their army. Each antgorithm is, at its core, just a method run every game tick for each `Ant` class object on your team that returns an instruction for that ant. 
 
-Antgorithms can access various properties and methods of the ant class. They can sense other ants, broadcast messages, recieve messages, know their location, and return instructions to move or attack.
+Antgorithms can access various properties and methods of the `Ant` class to sense their surroundings and communicate with other ants, then return instructions to move or attack.
 
 ## Turn Structure
 
@@ -74,7 +78,8 @@ Each game tick, the following steps are performed:
 
 `broadcast(str: message)` *(bool)*: broadcasts a message at the ant's current location. The message remains for a certain number of game ticks before disappearing. Returns `True` if the message was successfully broadcasted, and `False` otherwise.
 
-`receive(float: range=None)` *(Message)*: returns a list of all messages within `range` (defaults to the maximum of `smell_range`). Each tuple in the list contains the x and y coordinates of the message, the team of the ant that broadcasted the message, and the message itself.
+`receive(float: range=None)` *(list of Message)*: returns a list of all messages within `range` (defaults to the maximum of `smell_range`). Returns a list of `Message` objects, which have the following attributes:
+`x`, `y` (of where the message was sent), `team`, `contents`, and `age` (in game ticks)
 
 ### Movement and Combat
 
