@@ -2,54 +2,38 @@ import math
 import random
 
 def antgorithm(self):
-    
-    # Detect nearby ants and ignore friendly ants
-    ants_nearby = self.sense()
-    ants_nearby = [ant for ant in ants_nearby if ant[2] != self.team] 
 
-    # If near the edge of the screen, turn toward the center (unless already doing so)
-    # This is really annoying because pygame has an inverted y-axis but a conventional unit circle
-    dx = self.x - self.battle.bounds[0]/2
-    dy = self.y - self.battle.bounds[1]/2
-    angle_to_center = abs(math.atan2(dy, dx) + math.pi % (2*math.pi))
-    if self.x < 10 or self.x > self.battle.bounds[0] - 10 or self.y < 10 or self.y > self.battle.bounds[1] - 10:
+    # Determine if this ant will be a blocking ant or a running ant
+    if (self.battle.game_tick == 0):
+        self.memory["blocking_ant"] = random.random() < 0.5
+    
+    # Detect nearby ants
+    enemies_nearby = self.sense(include_teammates=False)
+    friends_nearby = self.sense(include_enemies=False)
+
+    # If we're near the edge of the battle, turn and walk towards the center
+    if self.near_bounds(buffer=10):
+        center = (self.battle.bounds[0]/2, self.battle.bounds[1]/2)
+        angle_to_center = self.angle_toward(center)
         if abs(angle_to_center - self.rotation) > math.pi/8:
             return("turn", {"rel_angle": angle_to_center - self.rotation})
         else:
             return("walk", {})
 
-    # If there are nearby ants, run away from the nearest one
-    for ant in ants_nearby:
-        nearest_ant = min(ants_nearby, key=lambda x: (x[0] - self.x)**2 + (x[1] - self.y)**2)
+    if len(enemies_nearby) > 0:
 
-        # Again with the inverted y-axis
-        dx = nearest_ant[0] - self.x
-        dy = nearest_ant[1] - self.y
-        angle_away_from_nearest_ant = abs(math.atan2(dy, dx) + math.pi % (2*math.pi)) 
-        angle_to_nearest_ant = abs(math.atan2(-dy, -dx) + math.pi % (2*math.pi)) 
+        # If it's a blocking ant, block (if they got too close)
+        nearest_enemy = self.nearest(enemies_nearby)
+        if self.memory["blocking_ant"] and self.distance_to(nearest_enemy) < self.bite_range:
+            return("block", {})
 
-        # Have a chance of attacking the nearest ant
-        if (random.random() < 0): # Attacking
-
-            # Bite if an enemy ant is in range
-            if (nearest_ant[0] - self.x)**2 + (nearest_ant[1] - self.y)**2 < self.range**2:
-                return("bite", {})
-            
-            # Walk towards the nearest ant, if the angle is close enough
-            if abs(angle_to_nearest_ant - self.rotation) < math.pi/2:
-                return("walk", {})
-            
-            # Turn towards the nearest ant
-            return("turn", {"rel_angle": angle_to_nearest_ant - self.rotation})
-
-        else: # Running away
-        
-            # Walk away from the nearest ant, if the angle is close enough
-            if abs(angle_away_from_nearest_ant - self.rotation) < math.pi/2:
-                return("walk", {})
-            
-            # Turn away from the nearest ant
-            return("turn", {"rel_angle": angle_away_from_nearest_ant - self.rotation})
+        # Run away from the average angle of the enemies
+        angles_away_from_enemies = [self.angle_toward(enemy) + math.pi % (2*math.pi) for enemy in enemies_nearby]
+        avg_angle_away = sum(angles_away_from_enemies)/len(angles_away_from_enemies) % (2*math.pi)
+        if abs(avg_angle_away - self.rotation) > math.pi/8:
+            return("turn", {"rel_angle": avg_angle_away - self.rotation})
+        else:
+            return("walk", {})
 
     # Do a random-ish walk if no ants are nearby
     if (random.random() < 0.1):

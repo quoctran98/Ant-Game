@@ -3,31 +3,26 @@ import random
 
 def antgorithm(self):
     
-    # Detect nearby ants and ignore friendly ants
-    ants_nearby = self.sense()
-    ants_nearby = [ant for ant in ants_nearby if ant[2] != self.team] 
+    # Detect nearby ants
+    enemies_nearby = self.sense(include_teammates=False)
+    friends_nearby = self.sense(include_enemies=False)
 
-    # If near the edge of the screen, turn toward the center (unless already doing so)
-    # This is really annoying because pygame has an inverted y-axis but a conventional unit circle
-    dx = self.x - self.battle.bounds[0]/2
-    dy = self.y - self.battle.bounds[1]/2
-    angle_to_center = abs(math.atan2(dy, dx) + math.pi % (2*math.pi))
-    if self.x < 10 or self.x > self.battle.bounds[0] - 10 or self.y < 10 or self.y > self.battle.bounds[1] - 10:
+    # If we're near the edge of the battle, turn and walk towards the center
+    if self.near_bounds(buffer=10):
+        center = (self.battle.bounds[0]/2, self.battle.bounds[1]/2)
+        angle_to_center = self.angle_toward(center)
         if abs(angle_to_center - self.rotation) > math.pi/8:
             return("turn", {"rel_angle": angle_to_center - self.rotation})
         else:
             return("walk", {})
 
-    for ant in ants_nearby:
-        nearest_ant = min(ants_nearby, key=lambda x: (x[0] - self.x)**2 + (x[1] - self.y)**2)
+    if len(enemies_nearby) > 0:
+        # Find the nearest enemy ant
+        angle_to_nearest_ant = self.angle_toward(self.nearest(enemies_nearby))
 
-        # Again with the inverted y-axis
-        dx = self.x - nearest_ant[0]
-        dy = self.y - nearest_ant[1]
-        angle_to_nearest_ant = abs(math.atan2(dy, dx) + math.pi % (2*math.pi)) 
-
-        # Bite if an enemy ant is in range
-        if (nearest_ant[0] - self.x)**2 + (nearest_ant[1] - self.y)**2 < self.range**2:
+        # Bite if an enemy ant is in attackble range
+        attackable_ants = self.attackable(include_teammates=False)
+        if len(attackable_ants) > 0:
             return("bite", {})
         
         # Walk towards the nearest ant, if the angle is close enough
