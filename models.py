@@ -93,7 +93,7 @@ class Message():
         self.content = content
         self.age = 0
 
-class Ant(pygame.sprite.Sprite):
+class Ant():
     def __init__(self, battle, team, 
                  stats_dict, init_position, antgorithm):
         
@@ -118,14 +118,14 @@ class Ant(pygame.sprite.Sprite):
         self.memory = {}
 
         # Attach the antgorithm
-        self.update = antgorithm
+        self.antgorithm = antgorithm
 
         # Add the ant to the battle
         self.battle = battle
         battle.ants.append(self)
 
         # Now let's deal with pygame stuff
-        super(Ant, self).__init__()
+        # super(Ant, self).__init__()
 
         # Import and display the ant's body
         image_path = "./assets/" + team + "_ant.png"
@@ -144,9 +144,11 @@ class Ant(pygame.sprite.Sprite):
         else:
             return(this_ant[0])
         
-    def copy(self):
-        """Return a copy of the ant."""
-        return(copy(self))
+    def _replace(self, **kwargs):
+        """Replace each attribute with the given value."""
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+        return(self)
 
     def attackable(self, include_teammates=False, include_enemies=True, return_objects=False):
         """Return a list of all ants that can be attacked (within bite_range and bite_angle)."""
@@ -302,7 +304,7 @@ class Ant(pygame.sprite.Sprite):
         self.battle.ants.remove(self)
         return(True)
     
-    def update(self):
+    def antgorithm(self):
         """The ant's antgorithm to be attached to the ant and run every tick."""
         return()
                 

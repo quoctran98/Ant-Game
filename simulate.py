@@ -12,24 +12,7 @@ import random
 from models import Battle, Ant
 
 # Import the antgorithms form ./antgorithms .py files
-from antgorithms import wandering_ant, attacking_ant, scared_ant, circle_ant, test_ant, marching_ant, squadron_ant
-
-battle = Battle()
-battle.bounds = (800, 800)
-
-pygame.init()
-
-# Set up the drawing window
-screen = pygame.display.set_mode([battle.bounds[0] + 400, battle.bounds[1]])
-arena = pygame.Surface(battle.bounds)
-arena.fill((255, 255, 255))
-screen.blit(arena, (0, 0))
-
-# Draw a border around the arena
-pygame.draw.rect(screen, (0, 0, 0), (0, 0, battle.bounds[0], battle.bounds[1]), 1)
-
-# Run until the user asks to quit
-running = True
+from antgorithms import wandering_ant, attacking_ant, scared_ant, circle_ant, test_ant, marching_ant, squadron_ant, super_squad_ant
 
 
 BASIC_ANT_STATS = {
@@ -40,59 +23,20 @@ BASIC_ANT_STATS = {
     "bite_damage": 1,
     "bite_range": 10,
     "bite_angle": math.pi/4,
-    "smell_range": 50
+    "smell_range": 100
 }
 
 N_ANTS = 100
 
-red_center = (400, 50)
-red_ants = pygame.sprite.Group()
-for _ in range(N_ANTS):
-    x = red_center[0] + random.randint(-50, 50)
-    y = red_center[1] + random.randint(-50, 50)
-    rot = random.random() * 2 * math.pi
-    ant = Ant(battle, "red",
-                  stats_dict=BASIC_ANT_STATS,
-                  init_position=(x,y,rot),
-                  antgorithm=squadron_ant.antgorithm)
-    red_ants.add(ant)
-    
-blue_center = (400, 750)
-blue_ants = pygame.sprite.Group()
-for _ in range(N_ANTS):
-    x = blue_center[0] + random.randint(-50, 50)
-    y = blue_center[1] + random.randint(-50, 50)
-    rot = random.random() * 2 * math.pi
-    ant = Ant(battle, "blue", 
-                   stats_dict=BASIC_ANT_STATS,
-                   init_position=(x,y,rot), 
-                   antgorithm=attacking_ant.antgorithm)
-    blue_ants.add(ant)
-
-green_center = (50, 400)
-green_ants = pygame.sprite.Group()
-for _ in range(N_ANTS):
-    x = green_center[0] + random.randint(-50, 50)
-    y = green_center[1] + random.randint(-50, 50)
-    rot = 0
-    ant = Ant(battle, "green", 
-                    stats_dict=BASIC_ANT_STATS,
-                    init_position=(x,y,rot), 
-                    antgorithm=marching_ant.antgorithm)
-    green_ants.add(ant)
-    
-black_center = (750, 400)
-black_ants = pygame.sprite.Group()
-for _ in range(N_ANTS):
-    x = black_center[0] + random.randint(-50, 50)
-    y = black_center[1] + random.randint(-50, 50)
-    rot = random.random() * 2 * math.pi
-    ant = Ant(battle, "black", 
-                     stats_dict=BASIC_ANT_STATS,
-                     init_position=(x,y,rot), 
-                     antgorithm=scared_ant.antgorithm)
-    black_ants.add(ant)
-
+def add_ants(battle, team, center, n_ants, antgorithm, stats=BASIC_ANT_STATS, rotation=None):
+    """Add a number of ants to the Battle object."""
+    for _ in range(n_ants):
+        x = center[0] + random.randint(-40, 40)
+        y = center[1] + random.randint(-40, 40)
+        rot = random.random() * 2 * math.pi if rotation is None else rotation
+        ant = Ant(battle, team, stats_dict=stats,
+                    init_position=(x,y,rot),
+                    antgorithm=antgorithm)
 
 # Draw the ants
 def draw_ants(screen, battle):
@@ -111,6 +55,7 @@ def draw_ants(screen, battle):
             # Draw the ant's surface (centered at the ant's position)
             screen.blit(rotated_ant, (ant.x - rotated_ant.get_width()/2, ant.y - rotated_ant.get_height()/2))
 
+def draw_stats(screen, battle):
     # List the population counts
     red_count = len([ant for ant in battle.ants if ant.alive and ant.team == "red"])
     blue_count = len([ant for ant in battle.ants if ant.alive and ant.team == "blue"])
@@ -130,45 +75,94 @@ def draw_ants(screen, battle):
 
 def execute_antgorithm(ant):
     """Wrapper to execute the ant's antgorithm."""
-    return(ant.update(ant))
+    return(ant.antgorithm(ant))
 
-# Main loop
-while running:
+if __name__ == "__main__":
 
-    # Did the user click the window close button?
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-    
-    # Fill the background with white
+    # Initialize pygame
+    pygame.init()
+    running = True
+
+    # Set up the battle
+    battle = Battle()
+    battle.bounds = (800, 800)
+
+    # Draw the screen
+    screen = pygame.display.set_mode([battle.bounds[0] + 400, battle.bounds[1]])
     screen.fill((255, 255, 255))
 
-    # Draw the ants every 10 ticks
-    draw_ants(screen, battle)
+    # Draw the arena
+    arena = pygame.Surface(battle.bounds)
+    arena.fill((255, 255, 255))
+    screen.blit(arena, (0, 0))
 
-    # Flip the display
-    pygame.display.flip()
+    # Add the ants to the battle
+    add_ants(battle, "red", (400, 50), 100, squadron_ant.antgorithm)
+    add_ants(battle, "blue", (400, 750), 100, super_squad_ant.antgorithm)
+    add_ants(battle, "green", (50, 400), 100, attacking_ant.antgorithm)
+    add_ants(battle, "black", (750, 400), 100, scared_ant.antgorithm)
 
-    # Execute the ants' programs (using multiprocessing)
-    # with multiprocessing.Pool() as pool:
-    #     instructions = pool.map(execute_antgorithm, battle.ants)
-    #     for ant, instruction in zip(battle.ants, instructions):
-    #         battle.instruction_queue[ant.id] = instruction
+    # Draw a border around the arena
+    pygame.draw.rect(screen, (0, 0, 0), (0, 0, battle.bounds[0], battle.bounds[1]), 1)
 
-    for ant in battle.ants:
-        if ant.alive:
-            # Execute the ant's antgorithm, update memory, and log the instruction
-            method_name, kwargs_dict = execute_antgorithm(ant)
-            battle.instruction_queue[ant.id] = (method_name, kwargs_dict)
+    # Start the pygame loop
+    while running:
 
-    # End of tick housekeeping
-    battle.resolve_instructions()
-    battle.resolve_attacks()
-    battle.resolve_messages()
-    battle.game_tick += 1
+        # Quit if the window is closed
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
 
-    # Wait 10 ms
-    pygame.time.wait(10)
+        # # Save and remove the ants' surfaces (to avoid pickling errors)
+        # ant_surfaces = [a.body_surf for a in battle.ants]
+        # battle.ants = [a._replace(body_surf=None) for a in battle.ants]
 
-# Done! Time to quit.
-pygame.quit()
+        # # Execute the ants' programs (using multiprocessing)
+        # with multiprocessing.Pool() as pool:
+        #     instructions = pool.map(execute_antgorithm, battle.ants)
+        #     for ant, instruction in zip(battle.ants, instructions):
+        #         battle.instruction_queue[ant.id] = instruction
+
+        # # Restore the ants' surfaces
+        # battle.ants = [a._replace(body_surf=surf) for a, surf in zip(battle.ants, ant_surfaces)]
+
+        for ant in battle.ants:
+            if ant.alive:
+                # Execute the ant's antgorithm, update memory, and log the instruction
+                method_name, kwargs_dict = execute_antgorithm(ant)
+                battle.instruction_queue[ant.id] = (method_name, kwargs_dict)
+
+        # End of tick housekeeping
+        battle.resolve_instructions()
+        battle.resolve_attacks()
+        battle.resolve_messages()
+        battle.game_tick += 1
+
+        # Check if the battle is over
+        if (len(set([ant.team for ant in battle.ants if ant.alive])) == 1):
+            font = pygame.font.SysFont("Comic Sans", 100)
+            message = font.render(f"{battle.ants[0].team} team wins!", True, (0, 0, 0))
+            screen.blit(message, (battle.bounds[0]/2 - message.get_width()/2, battle.bounds[1]/2 - message.get_height()/2))
+            pygame.display.flip()
+
+            # Wait for input
+            while True:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        running = False
+                        break
+                    if event.type == pygame.KEYDOWN:
+                        running = False
+                        break
+                if not running:
+                    break
+
+        # Update the screen
+        screen.fill((255, 255, 255))
+        draw_ants(screen, battle)
+        draw_stats(screen, battle)
+        pygame.display.flip()
+
+        # Wait 10 ms
+        # pygame.time.wait(10)
+
